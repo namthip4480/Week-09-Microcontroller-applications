@@ -1,1 +1,44 @@
+#include <stdio.h>
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
+// -------------------- CONFIG --------------------
+#define LED_PINS   {GPIO_NUM_2, GPIO_NUM_0, GPIO_NUM_4}
+#define LED_COUNT  3
+#define STEP_DELAY pdMS_TO_TICKS(500)
+#define PAUSE_DELAY pdMS_TO_TICKS(1000)
+
+// -------------------- FUNCTION --------------------
+static void setup_leds(const gpio_num_t *pins, int count) {
+    for (int i = 0; i < count; i++) {
+        gpio_reset_pin(pins[i]);
+        gpio_set_direction(pins[i], GPIO_MODE_OUTPUT);
+    }
+}
+
+static void leds_on_sequence(const gpio_num_t *pins, int count) {
+    for (int i = 0; i < count; i++) {
+        gpio_set_level(pins[i], 1);
+        vTaskDelay(STEP_DELAY);
+    }
+}
+
+static void leds_off_all(const gpio_num_t *pins, int count) {
+    for (int i = 0; i < count; i++) {
+        gpio_set_level(pins[i], 0);
+    }
+}
+
+// -------------------- MAIN APP --------------------
+void app_main(void) {
+    const gpio_num_t leds[LED_COUNT] = LED_PINS;
+
+    setup_leds(leds, LED_COUNT);
+
+    while (1) {
+        leds_on_sequence(leds, LED_COUNT);  // เปิดทีละดวง
+        vTaskDelay(PAUSE_DELAY);            // พัก 1 วิ
+        leds_off_all(leds, LED_COUNT);      // ดับทั้งหมด
+        vTaskDelay(PAUSE_DELAY);            // พัก 1 วิ
+    }
